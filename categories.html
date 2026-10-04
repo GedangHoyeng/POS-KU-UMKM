@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Kelola Kategori â€” POS-KU</title>
+  <meta name="description" content="Kelola kategori produk POS-KU untuk mengelompokkan produk toko dengan rapi." />
+  <meta name="theme-color" content="#0F766E" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="min-h-screen">
+
+  <main class="mx-auto max-w-5xl px-3 py-4 sm:px-5 sm:py-6">
+
+    <!-- ================= HEADER HALAMAN (mobile) ================= -->
+    <div class="mb-4 flex items-center justify-between lg:hidden">
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight text-slate-900">Kategori</h1>
+        <p class="text-xs text-slate-500" data-store-name>&mdash;</p>
+      </div>
+      <a href="dashboard.html" class="btn-secondary btn-icon" aria-label="Ke dashboard">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.955-8.955a1.125 1.125 0 011.59 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- ================= PENJELASAN ================= -->
+    <div class="card mb-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-start gap-4">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122" />
+          </svg>
+        </span>
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Kelompokkan produk agar mudah dicari</h2>
+          <p class="mt-1 text-sm leading-relaxed text-slate-600">
+            Kategori muncul sebagai filter di halaman Kasir dan Katalog Digital.
+            Menghapus kategori tidak menghapus produk â€” produk menjadi
+            <span class="font-medium text-slate-700">tanpa kategori</span>.
+          </p>
+        </div>
+      </div>
+      <button type="button" id="btn-add-category" class="btn-primary shrink-0">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Tambah Kategori
+      </button>
+    </div>
+
+    <!-- ================= DAFTAR KATEGORI ================= -->
+    <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" id="category-grid">
+      <!-- diisi oleh categories.js -->
+    </div>
+
+    <!-- Loading -->
+    <div id="category-loading" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="card skeleton h-32 rounded-2xl"></div>
+      <div class="card skeleton h-32 rounded-2xl"></div>
+      <div class="card skeleton h-32 rounded-2xl"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="category-empty" class="card empty-state hidden">
+      <span class="empty-icon">
+        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122" />
+        </svg>
+      </span>
+      <h3 class="text-base font-bold text-slate-900">Belum ada kategori</h3>
+      <p class="mt-1.5 max-w-xs text-sm text-slate-600">
+        Buat kategori seperti &ldquo;Sembako&rdquo; atau &ldquo;Kerajinan&rdquo; agar produk lebih rapi.
+      </p>
+      <button type="button" class="btn-primary btn-sm mt-5" id="btn-add-empty">Buat Kategori Pertama</button>
+    </div>
+
+  </main>
+
+  <!-- ================= MODAL TAMBAH / UBAH KATEGORI ================= -->
+  <dialog id="category-modal"
+          class="w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-slate-200 bg-white p-0 shadow-card-hover backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm">
+    <form id="category-form" novalidate>
+      <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 px-5 py-4">
+        <h2 class="text-base font-bold text-slate-900" id="category-modal-title">Tambah Kategori</h2>
+        <button type="button" class="btn-ghost btn-icon" data-close-modal aria-label="Tutup">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 p-5">
+        <div data-field>
+          <label for="category-name" class="form-label">Nama kategori <span class="text-rose-500">*</span></label>
+          <input type="text" id="category-name" name="name" maxlength="80"
+                 class="form-input" placeholder="mis. Sembako" autocomplete="off" />
+          <p class="form-error" data-error></p>
+        </div>
+
+        <div data-field>
+          <label for="category-description" class="form-label">Keterangan</label>
+          <textarea id="category-description" name="description" maxlength="300"
+                    class="form-textarea" placeholder="mis. Barang pokok harian seperti beras, minyak, gulaâ€¦"></textarea>
+          <p class="form-error" data-error></p>
+        </div>
+      </div>
+
+      <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:flex-row sm:justify-end">
+        <button type="button" class="btn-secondary" data-close-modal>Batal</button>
+        <button type="submit" id="btn-save-category" class="btn-primary">
+          <span class="spinner hidden" data-spinner></span>
+          <span data-save-label>Simpan Kategori</span>
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/localdb.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/categories.js"></script>
+</body>
+</html>

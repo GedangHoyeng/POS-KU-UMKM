@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Laporan &amp; Grafik — POS-KU</title>
+  <meta name="description" content="Laporan penjualan POS-KU: omzet harian, produk terlaris, perbandingan periode, dan grafik penjualan." />
+  <meta name="theme-color" content="#0F766E" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="min-h-screen">
+
+  <main class="mx-auto max-w-[1400px] px-3 py-4 sm:px-5 sm:py-6">
+
+    <!-- ================= HEADER HALAMAN (mobile) ================= -->
+    <div class="mb-4 flex items-center justify-between lg:hidden">
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight text-slate-900">Laporan</h1>
+        <p class="text-xs text-slate-500" data-store-name>&mdash;</p>
+      </div>
+      <a href="dashboard.html" class="btn-secondary btn-icon" aria-label="Ke dashboard">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.955-8.955a1.125 1.125 0 011.59 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- ================= FILTER PERIODE ================= -->
+    <div class="card mb-4 p-3 sm:p-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Periode</span>
+          <div class="flex gap-1.5" id="period-buttons" role="tablist" aria-label="Pilih periode">
+            <button type="button" class="btn-secondary btn-sm is-period-active" data-period="7" role="tab" aria-selected="true">7 Hari</button>
+            <button type="button" class="btn-secondary btn-sm" data-period="30" role="tab" aria-selected="false">30 Hari</button>
+            <button type="button" class="btn-secondary btn-sm" data-period="90" role="tab" aria-selected="false">90 Hari</button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 sm:ml-auto" id="period-caption"></p>
+      </div>
+    </div>
+
+    <!-- ================= KARTU RINGKASAN ================= -->
+    <div class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Omzet</p>
+        <p class="mt-1 text-2xl font-extrabold tabular text-brand-700" id="report-revenue">Rp 0</p>
+        <p class="mt-1 text-xs text-slate-500" id="report-revenue-trend">&mdash;</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Transaksi</p>
+        <p class="mt-1 text-2xl font-extrabold tabular text-slate-900" id="report-transactions">0</p>
+        <p class="mt-1 text-xs text-slate-500">Rata-rata <span id="report-aov">Rp 0</span></p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Item Terjual</p>
+        <p class="mt-1 text-2xl font-extrabold tabular text-slate-900" id="report-items">0</p>
+        <p class="mt-1 text-xs text-slate-500">Unit barang terjual</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Hari Terbaik</p>
+        <p class="mt-1 text-lg font-extrabold text-slate-900" id="report-best-day">&mdash;</p>
+        <p class="mt-1 text-xs text-slate-500" id="report-best-day-value"></p>
+      </div>
+    </div>
+
+    <!-- ================= GRAFIK TREN OMZET ================= -->
+    <section class="card card-hover mb-4 p-4" aria-labelledby="trend-title">
+      <div class="flex items-center justify-between">
+        <h2 id="trend-title" class="text-base font-bold text-slate-900">Tren Omzet</h2>
+        <span class="text-xs text-slate-500" id="trend-caption"></span>
+      </div>
+      <div class="mt-4 h-72" id="trend-chart-container">
+        <canvas id="trend-chart" aria-label="Grafik garis tren omzet"></canvas>
+      </div>
+    </section>
+
+    <!-- ================= KOMPOSISI & TERLARIS ================= -->
+    <div class="grid gap-3 lg:grid-cols-2">
+      <!-- Penjualan per kategori -->
+      <section class="card card-hover p-4" aria-labelledby="category-title">
+        <h2 id="category-title" class="text-base font-bold text-slate-900">Omzet per Kategori</h2>
+        <div id="category-chart-container" class="mt-4 h-64">
+          <canvas id="category-chart" aria-label="Grafik omzet per kategori"></canvas>
+        </div>
+        <div id="category-list" class="mt-4 space-y-2">
+          <!-- diisi oleh reports.js -->
+        </div>
+      </section>
+
+      <!-- Produk terlaris -->
+      <section class="card card-hover p-4" aria-labelledby="top-title">
+        <h2 id="top-title" class="text-base font-bold text-slate-900">Produk Terlaris (Periode Ini)</h2>
+        <div id="top-loading" class="mt-4 space-y-2">
+          <div class="skeleton h-12 w-full rounded-xl"></div>
+          <div class="skeleton h-12 w-full rounded-xl"></div>
+          <div class="skeleton h-12 w-full rounded-xl"></div>
+        </div>
+        <div id="top-table-wrap" class="table-wrap mt-4 hidden">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Produk</th>
+                <th class="text-center">Terjual</th>
+                <th class="text-right">Omzet</th>
+              </tr>
+            </thead>
+            <tbody id="top-table-body"></tbody>
+          </table>
+        </div>
+        <div id="top-empty" class="empty-state hidden">
+          <p class="text-sm text-slate-600">Belum ada penjualan pada periode ini.</p>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- ================= SCRIPT ================= -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/localdb.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/reports.js"></script>
+</body>
+</html>

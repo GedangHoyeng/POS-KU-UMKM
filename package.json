@@ -1,0 +1,14 @@
+{
+  "name": "pos-ku-umkm",
+  "version": "1.0.0",
+  "description": "POS-KU — Point of Sale & Katalog Digital UMKM (Industry-Based Programming Project)",
+  "private": true,
+  "scripts": {
+    "build": "tailwindcss -i ./css/input.css -o ./css/style.css --minify",
+    "dev": "tailwindcss -i ./css/input.css -o ./css/style.css --watch",
+    "serve": "npx --yes serve . -l 5500"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

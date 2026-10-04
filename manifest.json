@@ -1,0 +1,24 @@
+﻿{
+    "scope":  ".",
+    "description":  "Point of Sale dan katalog digital untuk UMKM Indonesia.",
+    "short_name":  "POS-KU",
+    "icons":  [
+                  {
+                      "purpose":  "any maskable",
+                      "type":  "image/svg+xml",
+                      "sizes":  "any",
+                      "src":  "assets/icons/icon.svg"
+                  }
+              ],
+    "lang":  "id-ID",
+    "theme_color":  "#0F766E",
+    "display":  "standalone",
+    "name":  "POS-KU — POS \u0026 Katalog UMKM",
+    "categories":  [
+                       "business",
+                       "productivity"
+                   ],
+    "background_color":  "#ffffff",
+    "start_url":  "index.html",
+    "orientation":  "portrait-primary"
+}

@@ -1,0 +1,231 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Kelola Produk â€” POS-KU</title>
+  <meta name="description" content="Kelola data produk POS-KU: tambah, ubah, cari, dan atur stok produk toko." />
+  <meta name="theme-color" content="#0F766E" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="min-h-screen">
+
+  <main class="mx-auto max-w-[1400px] px-3 py-4 sm:px-5 sm:py-6">
+
+    <!-- ================= HEADER HALAMAN (mobile) ================= -->
+    <div class="mb-4 flex items-center justify-between lg:hidden">
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight text-slate-900">Kelola Produk</h1>
+        <p class="text-xs text-slate-500" data-store-name>&mdash;</p>
+      </div>
+      <a href="dashboard.html" class="btn-secondary btn-icon" aria-label="Ke dashboard">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.955-8.955a1.125 1.125 0 011.59 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- ================= TOOLBAR ================= -->
+    <div class="card mb-4 p-3 sm:p-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <!-- Pencarian -->
+        <div class="relative flex-1">
+          <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+               fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607Z" />
+          </svg>
+          <input type="search" id="search-product" autocomplete="off"
+                 class="form-input pl-11"
+                 placeholder="Cari nama produkâ€¦"
+                 aria-label="Cari produk" />
+        </div>
+
+        <!-- Filter kategori -->
+        <select id="filter-category" class="form-select sm:w-52" aria-label="Filter kategori">
+          <option value="">Semua kategori</option>
+        </select>
+
+        <!-- Filter status -->
+        <select id="filter-status" class="form-select sm:w-44" aria-label="Filter status">
+          <option value="">Semua status</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Nonaktif</option>
+        </select>
+
+        <!-- Tombol tambah -->
+        <button type="button" id="btn-add-product" class="btn-primary shrink-0">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Tambah Produk
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= RINGKASAN ================= -->
+    <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Produk</p>
+        <p class="mt-1 text-2xl font-extrabold tabular text-slate-900" id="stat-total">0</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Aktif</p>
+        <p class="mt-1 text-2xl font-extrabold tabular text-emerald-600" id="stat-active">0</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Stok Menipis</p>
+        <p class="mt-1 text-2xl font-extrabold tabular text-amber-600" id="stat-low">0</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Habis</p>
+        <p class="mt-1 text-2xl font-extrabold tabular text-rose-600" id="stat-out">0</p>
+      </div>
+    </div>
+
+    <!-- ================= TABEL PRODUK ================= -->
+    <div class="card overflow-hidden">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Produk</th>
+              <th>Kategori</th>
+              <th class="text-right">Harga</th>
+              <th class="text-center">Stok</th>
+              <th class="text-center">Status</th>
+              <th class="text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="product-table-body">
+            <!-- diisi oleh products.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Skeleton loading -->
+      <div id="product-loading" class="space-y-2 p-4">
+        <div class="skeleton h-14 w-full rounded-xl"></div>
+        <div class="skeleton h-14 w-full rounded-xl"></div>
+        <div class="skeleton h-14 w-full rounded-xl"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="product-empty" class="empty-state hidden">
+        <span class="empty-icon">
+          <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11v6m4-6v6M5.25 7.5h13.5L18 4.5H6l-.75 3z" />
+          </svg>
+        </span>
+        <h3 class="text-base font-bold text-slate-900">Belum ada produk</h3>
+        <p class="mt-1.5 max-w-xs text-sm text-slate-600">
+          Tambahkan produk pertama toko Anda untuk mulai berjualan.
+        </p>
+        <button type="button" class="btn-primary btn-sm mt-5" data-action="add-from-empty">Tambah Produk</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= MODAL TAMBAH / UBAH PRODUK ================= -->
+  <dialog id="product-modal"
+          class="w-[calc(100vw-2rem)] max-w-lg rounded-2xl border border-slate-200 bg-white p-0 shadow-card-hover backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm">
+    <form id="product-form" novalidate>
+      <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 px-5 py-4">
+        <h2 class="text-base font-bold text-slate-900" id="product-modal-title">Tambah Produk</h2>
+        <button type="button" class="btn-ghost btn-icon" data-close-modal aria-label="Tutup">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="max-h-[60vh] space-y-4 overflow-y-auto p-5">
+        <!-- Nama -->
+        <div data-field>
+          <label for="product-name" class="form-label">Nama produk <span class="text-rose-500">*</span></label>
+          <input type="text" id="product-name" name="name" maxlength="120"
+                 class="form-input" placeholder="mis. Beras Premium 5 kg" autocomplete="off" />
+          <p class="form-error" data-error></p>
+        </div>
+
+        <!-- Kategori -->
+        <div data-field>
+          <label for="product-category" class="form-label">Kategori</label>
+          <select id="product-category" name="category_id" class="form-select">
+            <option value="">â€” Tanpa kategori â€”</option>
+          </select>
+          <p class="form-error" data-error></p>
+        </div>
+
+        <!-- Harga & stok -->
+        <div class="grid grid-cols-2 gap-3">
+          <div data-field>
+            <label for="product-price" class="form-label">Harga (Rp) <span class="text-rose-500">*</span></label>
+            <input type="number" id="product-price" name="price" min="0" step="100"
+                   class="form-input tabular" placeholder="0" inputmode="numeric" />
+            <p class="form-error" data-error></p>
+          </div>
+          <div data-field>
+            <label for="product-stock" class="form-label">Stok <span class="text-rose-500">*</span></label>
+            <input type="number" id="product-stock" name="stock" min="0" step="1"
+                   class="form-input tabular" placeholder="0" inputmode="numeric" />
+            <p class="form-error" data-error></p>
+          </div>
+        </div>
+
+        <!-- Gambar -->
+        <div data-field>
+          <label for="product-image" class="form-label">Gambar produk</label>
+          <input type="url" id="product-image" name="image_url"
+                 class="form-input" placeholder="https://contoh.com/gambar.jpg" autocomplete="off" />
+          <p class="form-hint">Tempel tautan gambar (http/https). Kosongkan bila tidak ada.</p>
+          <div id="image-preview-wrap" class="mt-2 hidden">
+            <img id="image-preview" alt="Pratinjau gambar produk"
+                 class="h-28 w-28 rounded-xl border border-slate-200 object-cover" />
+          </div>
+          <p class="form-error" data-error></p>
+        </div>
+
+        <!-- Deskripsi -->
+        <div data-field>
+          <label for="product-description" class="form-label">Deskripsi singkat</label>
+          <textarea id="product-description" name="description" maxlength="500"
+                    class="form-textarea" placeholder="Bahan, isi kemasan, catatan lainâ€¦"></textarea>
+          <p class="form-error" data-error></p>
+        </div>
+
+        <!-- Status aktif -->
+        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+          <input type="checkbox" id="product-active" name="is_active" checked
+                 class="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500" />
+          <span class="text-sm font-medium text-slate-700">
+            Produk aktif (tampil di kasir &amp; katalog)
+          </span>
+        </label>
+      </div>
+
+      <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:flex-row sm:justify-end">
+        <button type="button" class="btn-secondary" data-close-modal>Batal</button>
+        <button type="submit" id="btn-save-product" class="btn-primary">
+          <span class="spinner hidden" data-spinner></span>
+          <span data-save-label>Simpan Produk</span>
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/localdb.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/products.js"></script>
+</body>
+</html>

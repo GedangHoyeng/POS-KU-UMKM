@@ -1,0 +1,302 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 font-sans text-slate-700 antialiased;
+  }
+
+  /* Angka harga selalu rata dengan lebar digit yang sama agar mudah dibandingkan */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Fokus keyboard yang jelas untuk navigasi aksesibel */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
+  }
+
+  /* Sembunyikan spinner number input (pakai tombol +/- ourselves) */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  /* Scrollbar tipis yang konsisten */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+/* ==========================================================================
+   COMPONENTS
+   ========================================================================== */
+@layer components {
+  /* --- Tombol ------------------------------------------------------------ */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+           text-sm font-semibold transition-all duration-150
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn:focus-visible {
+    @apply ring-2 ring-brand-500 ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-700 text-white shadow-sm
+           hover:bg-brand-800 hover:shadow-glow active:scale-[.97];
+  }
+  .btn-secondary {
+    @apply btn border border-slate-300 bg-white text-slate-700
+           hover:bg-slate-50 hover:border-slate-400 active:scale-[.97];
+  }
+  .btn-accent {
+    @apply btn bg-accent-500 text-white shadow-sm
+           hover:bg-accent-600 active:scale-[.97];
+  }
+  .btn-danger {
+    @apply btn bg-rose-600 text-white shadow-sm
+           hover:bg-rose-700 active:scale-[.97];
+  }
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .btn-icon {
+    @apply h-9 w-9 p-0;
+  }
+
+  /* --- Kartu ------------------------------------------------------------- */
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-card;
+  }
+  .card-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:border-slate-300;
+  }
+  .card-body {
+    @apply p-5;
+  }
+
+  /* --- Form -------------------------------------------------------------- */
+  .form-label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .form-input {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5
+           text-sm text-slate-900 placeholder:text-slate-400
+           transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100 focus:outline-none;
+  }
+  .form-select {
+    @apply form-input cursor-pointer appearance-none bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  }
+  .form-textarea {
+    @apply form-input min-h-[90px] resize-y;
+  }
+  .form-error {
+    @apply mt-1.5 hidden text-xs font-medium text-rose-600;
+  }
+  .form-hint {
+    @apply mt-1.5 text-xs text-slate-500;
+  }
+
+  /* --- Badge ------------------------------------------------------------- */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
+           text-xs font-semibold ring-1 ring-inset;
+  }
+  .badge-success {
+    @apply badge bg-emerald-50 text-emerald-700 ring-emerald-600/20;
+  }
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-700 ring-amber-600/25;
+  }
+  .badge-danger {
+    @apply badge bg-rose-50 text-rose-700 ring-rose-600/20;
+  }
+  .badge-neutral {
+    @apply badge bg-slate-100 text-slate-600 ring-slate-500/20;
+  }
+  .badge-brand {
+    @apply badge bg-brand-50 text-brand-700 ring-brand-600/20;
+  }
+
+  /* --- Tabel ------------------------------------------------------------ */
+  .table-wrap {
+    @apply w-full overflow-x-auto;
+  }
+  .data-table {
+    @apply w-full min-w-[640px] text-left text-sm;
+  }
+  .data-table thead th {
+    @apply whitespace-nowrap border-b border-slate-200 bg-slate-50/80 px-4 py-3
+           text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .data-table tbody td {
+    @apply border-b border-slate-100 px-4 py-3 align-middle;
+  }
+  .data-table tbody tr {
+    @apply transition-colors hover:bg-slate-50/70;
+  }
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  /* --- Empty state ------------------------------------------------------- */
+  .empty-state {
+    @apply flex flex-col items-center justify-center px-6 py-14 text-center;
+  }
+  .empty-icon {
+    @apply mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400;
+  }
+
+  /* --- Loading ----------------------------------------------------------- */
+  .spinner {
+    @apply inline-block h-4 w-4 animate-spin rounded-full border-2 border-current
+           border-t-transparent;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-slate-200/70;
+  }
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r
+           from-transparent via-white/60 to-transparent;
+    content: '';
+    animation: shimmer 1.6s infinite;
+  }
+
+  /* --- Input kuantitas --------------------------------------------------- */
+  .qty-btn {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
+           border border-slate-300 bg-white text-slate-700 transition
+           hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700
+           active:scale-90 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .qty-input {
+    @apply h-8 w-12 shrink-0 rounded-lg border border-slate-300 bg-white
+           text-center text-sm font-semibold text-slate-900 tabular
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none;
+  }
+
+  /* --- Sidebar link ------------------------------------------------------ */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium
+           text-slate-400 transition-all duration-150
+           hover:bg-white/5 hover:text-white;
+  }
+  .nav-link.is-active {
+    @apply bg-brand-600/15 text-brand-300 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.15)];
+  }
+  .nav-link.is-active .nav-icon {
+    @apply text-brand-400;
+  }
+  .nav-icon {
+    @apply h-5 w-5 shrink-0 text-slate-500 transition-colors;
+  }
+
+  /* --- Bottom navigation (mobile) ---------------------------------------- */
+  .bottom-nav {
+    @apply fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95
+           backdrop-blur-lg lg:hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-nav-item {
+    @apply flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium
+           text-slate-400 transition-colors;
+  }
+  .bottom-nav-item.is-active {
+    @apply text-brand-700;
+  }
+  .bottom-nav-item.is-active svg {
+    @apply scale-110;
+  }
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+@layer utilities {
+  /* Sembunyikan scrollbar tapi tetap bisa digulir (untuk chip kategori) */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Gradien teks untuk judul hero */
+  .text-gradient {
+    @apply bg-gradient-to-br from-brand-700 via-brand-600 to-accent-500 bg-clip-text text-transparent;
+  }
+
+  /* Latar dekoratif untuk hero (grid halus) */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, rgb(15 23 42 / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(15 23 42 / 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
+
+/* ==========================================================================
+   PRINT — untuk struk/nota
+   ========================================================================== */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  /* Sembunyikan semua elemen navigasi & tombol saat mencetak */
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Kontainer struk jadi blok penuh tanpa bayangan */
+  #receipt-root,
+  #receipt-root * {
+    box-shadow: none !important;
+    border-color: #000 !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

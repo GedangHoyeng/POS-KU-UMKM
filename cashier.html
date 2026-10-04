@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Kasir â€” POS-KU</title>
+  <meta name="description" content="Antarmuka kasir POS-KU: pilih produk, atur keranjang, hitung total dan kembalian, lalu proses pembayaran." />
+  <meta name="theme-color" content="#0F766E" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="min-h-screen">
+
+  <main class="mx-auto max-w-[1600px] px-3 py-4 sm:px-5 sm:py-6">
+
+    <!-- ================= HEADER HALAMAN (mobile) ================= -->
+    <div class="mb-4 flex items-center justify-between lg:hidden">
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight text-slate-900">Kasir</h1>
+        <p class="text-xs text-slate-500" data-store-name>&mdash;</p>
+      </div>
+      <a href="dashboard.html" class="btn-secondary btn-icon" aria-label="Ke dashboard">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.955-8.955a1.125 1.125 0 011.59 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- ================= LAYOUT DUA KOLOM ================= -->
+    <div class="grid gap-4 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_430px]">
+
+      <!-- ============ KOLOM KIRI: KATALOG PRODUK ============ -->
+      <section aria-label="Daftar produk">
+
+        <!-- Pencarian + filter -->
+        <div class="card mb-4 p-3 sm:p-4">
+          <div class="relative">
+            <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+                 fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607Z" />
+            </svg>
+            <input type="search" id="search-product" autocomplete="off"
+                   class="form-input pl-11"
+                   placeholder="Cari produk berdasarkan namaâ€¦"
+                   aria-label="Cari produk" />
+          </div>
+
+          <!-- Chip kategori (dari DB, diisi oleh cashier.js) -->
+          <div class="mt-3 flex gap-2 overflow-x-auto no-scrollbar" id="category-chips" role="tablist" aria-label="Filter kategori">
+            <!-- diisi oleh JavaScript -->
+          </div>
+        </div>
+
+        <!-- Grid produk -->
+        <div id="product-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <!-- skeleton loading -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="product-empty" class="card empty-state hidden">
+          <span class="empty-icon">
+            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11v6m4-6v6M5.25 7.5h13.5L18 4.5H6l-.75 3z" />
+            </svg>
+          </span>
+          <h3 class="text-base font-bold text-slate-900">Produk tidak ditemukan</h3>
+          <p class="mt-1.5 max-w-xs text-sm text-slate-600">
+            Coba kata kunci lain atau pilih kategori yang berbeda.
+          </p>
+          <a href="products.html" class="btn-secondary btn-sm mt-5">Kelola Produk</a>
+        </div>
+      </section>
+
+      <!-- ============ KOLOM KANAN: KERANJANG ============ -->
+      <aside aria-label="Keranjang belanja"
+             class="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)]">
+
+        <div class="card flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden lg:max-h-[calc(100vh-6rem)]">
+
+          <!-- Judul keranjang -->
+          <div class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50/70 px-4 py-3">
+            <h2 class="flex items-center gap-2 text-sm font-bold text-slate-900">
+              <svg class="h-5 w-5 text-brand-700" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+              </svg>
+              Keranjang
+            </h2>
+            <button type="button" id="clear-cart"
+                    class="rounded-lg px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50">
+              Kosongkan
+            </button>
+          </div>
+
+          <!-- Daftar item keranjang (dapat di-scroll) -->
+          <div id="cart-items" class="flex-1 divide-y divide-slate-100 overflow-y-auto overscroll-contain p-2">
+            <!-- diisi oleh cashier.js -->
+          </div>
+
+          <!-- Empty state keranjang -->
+          <div id="cart-empty" class="empty-state py-12">
+            <span class="empty-icon bg-brand-50 text-brand-400">
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+              </svg>
+            </span>
+            <p class="text-sm font-semibold text-slate-700">Keranjang masih kosong</p>
+            <p class="mt-1 text-xs text-slate-500">Pilih produk di sebelah untuk memulai transaksi</p>
+          </div>
+
+          <!-- Ringkasan & pembayaran -->
+          <div id="cart-summary" class="shrink-0 border-t border-slate-200 bg-slate-50/70 p-4 hidden">
+            <!-- Baris item -->
+            <dl class="space-y-1.5 text-sm">
+              <div class="flex justify-between text-slate-600">
+                <dt>Jumlah item</dt>
+                <dd class="font-medium tabular"><span data-summary-count>0</span> item</dd>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <dt>Total belanja</dt>
+                <dd class="font-medium tabular text-slate-800" data-summary-subtotal>Rp 0</dd>
+              </div>
+            </dl>
+
+            <!-- Total besar -->
+            <div class="mt-3 flex items-end justify-between rounded-xl bg-ink-900 px-4 py-3">
+              <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total</span>
+              <span class="text-2xl font-extrabold tabular text-white" id="total-amount">Rp 0</span>
+            </div>
+
+            <!-- Input uang pelanggan -->
+            <div class="mt-3" data-field>
+              <label for="paid-input" class="form-label">Uang pelanggan</label>
+              <div class="relative">
+                <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
+                  Rp
+                </span>
+                <input type="number" id="paid-input" inputmode="numeric" min="0" step="100"
+                       class="form-input pl-10 text-lg font-bold tabular"
+                       placeholder="0" aria-describedby="change-hint" />
+              </div>
+              <!-- Quick amount -->
+              <div class="mt-2 flex flex-wrap gap-1.5" id="quick-amounts">
+                <!-- diisi oleh cashier.js -->
+              </div>
+            </div>
+
+            <!-- Kembalian -->
+            <div id="change-box"
+                 class="mt-3 hidden items-center justify-between rounded-xl border-2 px-4 py-3 transition-all">
+              <span class="text-sm font-semibold">Kembalian</span>
+              <span class="text-xl font-extrabold tabular" id="change-amount">Rp 0</span>
+            </div>
+
+            <p id="change-hint" class="form-hint text-center">Uang kurang: <span class="font-semibold" id="shortage-amount">Rp 0</span></p>
+
+            <!-- Tombol aksi -->
+            <div class="mt-3 flex gap-2">
+              <button type="button" id="btn-cancel-sale" class="btn-secondary flex-1">
+                Batal
+              </button>
+              <button type="button" id="btn-checkout"
+                      class="btn-primary flex-[2] shadow-glow">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                </svg>
+                <span>Proses Pembayaran</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ================= MODAL STRUK ================= -->
+  <dialog id="success-modal"
+          class="w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-slate-200 bg-white p-0 shadow-card-hover backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm">
+    <div class="p-6 text-center">
+      <!-- Ikon sukses -->
+      <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 animate-scale-in">
+        <svg class="h-9 w-9" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+        </svg>
+      </span>
+
+      <h2 class="mt-4 text-xl font-extrabold text-slate-900">Transaksi Berhasil</h2>
+      <p class="mt-1 text-sm text-slate-600">Transaksi berhasil disimpan.</p>
+
+      <!-- Ringkasan -->
+      <dl class="mt-5 space-y-2 rounded-xl bg-slate-50 p-4 text-left text-sm">
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Nomor transaksi</dt>
+          <dd class="font-bold tabular text-slate-900" id="success-number">-</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Total</dt>
+          <dd class="font-bold tabular text-slate-900" id="success-total">-</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Kembalian</dt>
+          <dd class="font-bold tabular text-emerald-600" id="success-change">-</dd>
+        </div>
+      </dl>
+
+      <!-- Aksi -->
+      <div class="mt-6 flex flex-col gap-2 sm:flex-row">
+        <a id="success-receipt" href="receipt.html" class="btn-primary flex-1">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Z" />
+          </svg>
+          Lihat Struk
+        </a>
+        <button type="button" id="success-new" class="btn-secondary flex-1">
+          Transaksi Baru
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/localdb.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/cashier.js"></script>
+</body>
+</html>

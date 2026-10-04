@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# Environment & secrets — JANGAN pernah di-commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Test / debug / scratch sementara
+*.log
+npm-debug.log*
+scratch/
+tmp/
+.temp/
+coverage/
+playwright-report/
+test-results/
+test-e2e.js
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Build output
+dist/
+build/
+.vercel/
+.netlify/
