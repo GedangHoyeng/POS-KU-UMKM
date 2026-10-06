@@ -287,7 +287,7 @@ const LocalDB = (() => {
           id: 1,
           store_name: 'Toko Berkah Bersama',
           tagline: 'Sembako, makanan, dan kerajinan lokal',
-          whatsapp_number: '6281234567890',
+          whatsapp_number: '6285723052692',
           address: 'Jl. Merdeka No. 10, Indonesia',
           created_at: isoDaysAgo(60),
           updated_at: isoDaysAgo(60),

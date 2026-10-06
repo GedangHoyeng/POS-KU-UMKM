@@ -59,10 +59,27 @@ const NAV_ITEMS = [
   },
 ];
 
-/** Nama halaman saat ini, diambil dari nama file URL. */
+/**
+ * Nama halaman saat ini, diambil dari nama file URL.
+ *
+ * Server development (mis. `npx serve`) me-redirect `/receipt.html?id=...`
+ * menjadi `/receipt` (cleanUrls). Tanpa normalisasi, nama halaman menjadi
+ * "receipt" sehingga halaman publik tidak dikenali dan sidebar ikut
+ * ter-render di atas konten.
+ *
+ * @returns {string} nama file HTML (mis. "receipt.html"), selalu berakhiran ".html"
+ */
 function getCurrentPage() {
-  const file = window.location.pathname.split('/').pop() || 'index.html';
-  return file === '' ? 'index.html' : file;
+  const path = window.location.pathname;
+  let file = path.split('/').filter(Boolean).pop() || 'index.html';
+
+  // URL bersih (tanpa ekstensi) diberi sufiks .html agar cocok dengan
+  // daftar halaman dan pengecekan halaman publik.
+  if (!file.includes('.')) {
+    file = `${file}.html`;
+  }
+
+  return file;
 }
 
 const App = (() => {
@@ -212,8 +229,17 @@ const App = (() => {
     startClock();
   }
 
-  /** Mengubah elemen agar kontennya dimulai setelah sidebar (desktop). */
+  /**
+   * Mengubah elemen agar kontennya dimulai setelah sidebar (desktop).
+   *
+   * Offset hanya dipasang bila sidebar benar-benar dirender. Halaman publik
+   * (katalog & struk) sengaja tidak memakai sidebar, sehingga kontennya
+   * harus tetap mulai dari tepi kiri tanpa ruang kosong yang tidak perlu.
+   */
   function applyLayoutOffset() {
+    const sidebar = document.getElementById('app-sidebar');
+    if (!sidebar) return;
+
     const main = document.querySelector('main');
     if (main) main.classList.add('lg:ml-64');
   }

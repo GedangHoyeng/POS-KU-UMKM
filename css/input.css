@@ -300,3 +300,35 @@
 .print-only {
   display: none;
 }
+
+/* --- Upload gambar produk ------------------------------------------------ */
+/* Area upload gambar pada form produk (Tambah/Ubah Produk).
+   Semua selector di-scope ke .image-upload-area supaya tidak
+   memengaruhi halaman lain. */
+.image-upload-area .upload-drop-zone {
+  @apply flex w-full cursor-pointer flex-col items-center justify-center
+         rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/70
+         px-4 py-6 text-center transition-all duration-200
+         hover:border-brand-400 hover:bg-brand-50/50;
+}
+
+.image-upload-area .upload-drop-zone:focus-visible {
+  @apply outline-none ring-4 ring-brand-100;
+}
+
+/* State drag: file sedang diseret ke atas area upload. */
+.image-upload-area .upload-drop-zone.is-dragging {
+  @apply border-brand-500 bg-brand-50 ring-4 ring-brand-100;
+  transform: scale(1.01);
+}
+
+/* Preview gambar terpilih atau gambar lama produk. */
+.image-upload-area #image-preview {
+  @apply ring-1 ring-slate-200;
+}
+
+/* Tombol "Ganti gambar" dan "Hapus gambar" di bawah preview. */
+.image-upload-area #btn-replace-image,
+.image-upload-area #btn-remove-image {
+  @apply text-xs;
+}

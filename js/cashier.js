@@ -31,6 +31,8 @@ const Cashier = (() => {
   let searchQuery = '';
   /** Elemen DOM (diisi saat init). */
   let els = {};
+  /** URL struk transaksi terakhir (diisi saat checkout berhasil). */
+  let lastReceiptUrl = '';
 
   // ==========================================================================
   // MEMUAT DATA
@@ -576,7 +578,12 @@ const Cashier = (() => {
     els.successNumber.textContent = number;
     els.successTotal.textContent = Utils.formatRupiah(total);
     els.successChange.textContent = Utils.formatRupiah(change);
-    els.successReceipt.href = `receipt.html?id=${encodeURIComponent(number)}`;
+    lastReceiptUrl = `receipt.html?id=${encodeURIComponent(number)}`;
+    try {
+      window.sessionStorage.setItem('posku:lastTransactionNumber', number);
+    } catch (error) {
+      // sessionStorage bisa gagal di mode privat; URL tetap membawa nomor.
+    }
 
     // Reset keranjang.
     cart.clear();
@@ -698,6 +705,12 @@ const Cashier = (() => {
     });
 
     // --- Modal sukses ---
+    els.successReceipt.addEventListener('click', () => {
+      if (lastReceiptUrl) {
+        window.location.href = lastReceiptUrl;
+      }
+    });
+
     els.successNew.addEventListener('click', () => {
       Utils.closeModal(els.successModal);
       els.searchInput.focus();

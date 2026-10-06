@@ -29,6 +29,18 @@ const Products = (() => {
   /** Id produk yang sedang diedit. null = mode tambah. */
   let editingId = null;
 
+  // --- State gambar produk ---
+  /** File gambar yang dipilih user (belum di-upload). */
+  let selectedImageFile = null;
+  /** URL gambar lama (saat edit). Dipakai bila user tidak memilih gambar baru. */
+  let existingImageUrl = '';
+  /** URL gambar yang sudah di-upload (untuk preview). */
+  let uploadedImageUrl = '';
+  /** True bila user menekan "Hapus gambar" pada form ini. */
+  let imageRemoved = false;
+  /** Apakah sedang dalam proses upload. */
+  let isUploading = false;
+
   /** Elemen DOM (diisi saat init). */
   let els = {};
 
@@ -262,29 +274,51 @@ const Products = (() => {
     els.form.reset();
     Utils.resetValidation(els.form);
 
+// Reset seluruh state gambar sebelum mengisi ulang.
+    selectedImageFile = null;
+    existingImageUrl = '';
+    uploadedImageUrl = '';
+    imageRemoved = false;
+    if (els.fileInput) els.fileInput.value = '';
+    if (els.fileInfo) els.fileInfo.textContent = '';
+
     if (product) {
       els.formName.value = product.name || '';
       els.formCategory.value = product.category_id ? String(product.category_id) : '';
       els.formPrice.value = Number(product.price) || 0;
       els.formStock.value = product.stock ?? 0;
-      els.formImage.value = product.image_url || '';
       els.formDescription.value = product.description || '';
       els.formActive.checked = product.is_active !== false;
+
+      // Gambar lama: tampilkan sebagai preview dan pertahankan.
+      existingImageUrl = product.image_url || '';
+      if (existingImageUrl) {
+        showPreview(existingImageUrl, 'Gambar produk saat ini.');
+        setDropZoneText('Gambar sudah dipilih');
+      } else {
+        hidePreview();
+      }
     } else {
       els.formPrice.value = '';
       els.formStock.value = '';
       els.formActive.checked = true;
+      hidePreview();
     }
 
-    updateImagePreview();
     Utils.openModal(els.modal);
   }
 
   function closeForm() {
     Utils.closeModal(els.modal);
     editingId = null;
+    selectedImageFile = null;
+    existingImageUrl = '';
+    uploadedImageUrl = '';
+    if (els.fileInput) els.fileInput.value = '';
+    if (els.fileInfo) els.fileInfo.textContent = '';
     els.form.reset();
     Utils.resetValidation(els.form);
+    hidePreview();
   }
 
   // ==========================================================================
@@ -301,9 +335,9 @@ const Products = (() => {
     const price = Number(els.formPrice.value);
     const stock = Number(els.formStock.value);
     const categoryId = els.formCategory.value ? Number(els.formCategory.value) : null;
-    const imageUrl = els.formImage.value.trim();
     const description = els.formDescription.value.trim();
     const isActive = els.formActive.checked;
+    const removeImageRequested = imageRemoved;
 
     // --- Validasi manual di luar aturan Utils (agar pesan lebih spesifik) --
     if (name === '') {
@@ -322,24 +356,41 @@ const Products = (() => {
       return;
     }
 
-    const payload = {
-      name,
-      price,
-      stock,
-      category_id: categoryId,
-      image_url: imageUrl === '' ? null : imageUrl,
-      description: description === '' ? null : description,
-      is_active: isActive,
-    };
-
     if (!window.isConfigured) {
       Utils.showToast(window.SUPABASE_INIT_ERROR, 'error');
       return;
     }
 
-    setSaving(true);
+    // --- Tentukan URL gambar final -----------------------------------------
+    // 1) User memilih file baru  -> upload dulu ke Supabase Storage.
+    // 2) User menekan "Hapus"     -> image_url menjadi null.
+    // 3) Tidak ada pilihan baru   -> pertahankan URL lama (produk lama kompatibel).
+    let finalImageUrl = existingImageUrl || null;
+    const hasNewFile = Boolean(selectedImageFile);
+
+    if (!hasNewFile && removeImageRequested) finalImageUrl = null;
+
+    const payload = {
+      name,
+      price,
+      stock,
+      category_id: categoryId,
+      description: description === '' ? null : description,
+      is_active: isActive,
+    };
+
+    setSaving(true, hasNewFile ? 'Mengunggah gambar…' : 'Menyimpan produk…');
 
     try {
+      if (hasNewFile) {
+        // Bucket storage belum siap / policy belum dibuat -> beri pesan jelas.
+        finalImageUrl = await uploadImageToStorage(selectedImageFile);
+        uploadedImageUrl = finalImageUrl;
+        setSaving(true, 'Menyimpan produk…');
+      }
+
+      payload.image_url = finalImageUrl;
+
       if (editingId) {
         const { error } = await getSupabase()
           .from('products')
@@ -347,6 +398,11 @@ const Products = (() => {
           .eq('id', editingId);
         if (error) throw error;
         Utils.showToast('Produk berhasil diperbarui.', 'success');
+
+        // Bersihkan file lama HANYA bila gambar benar-benar diganti / dihapus.
+        if (existingImageUrl && existingImageUrl !== finalImageUrl) {
+          await removeOldImageFile(existingImageUrl);
+        }
       } else {
         const { error } = await getSupabase().from('products').insert(payload);
         if (error) throw error;
@@ -381,14 +437,15 @@ const Products = (() => {
     field.setAttribute('aria-invalid', 'true');
   }
 
-  function setSaving(saving) {
+  function setSaving(saving, label) {
     els.spinner.classList.toggle('hidden', !saving);
-    els.saveLabel.textContent = saving
-      ? 'Menyimpan…'
-      : editingId
-        ? 'Simpan Perubahan'
-        : 'Simpan Produk';
+    if (saving) {
+      els.saveLabel.textContent = label || 'Menyimpan…';
+    } else {
+      els.saveLabel.textContent = editingId ? 'Simpan Perubahan' : 'Simpan Produk';
+    }
     els.saveBtn.disabled = saving;
+    isUploading = saving;
   }
 
   // ==========================================================================
@@ -452,14 +509,124 @@ const Products = (() => {
   // PRATINJAU GAMBAR
   // ==========================================================================
 
-  function updateImagePreview() {
-    const url = Utils.safeImageUrl(els.formImage.value.trim());
-    if (!url) {
-      els.previewWrap.classList.add('hidden');
+  // ==========================================================================
+  // GAMBAR PRODUK (preview + upload ke Supabase Storage)
+  // ==========================================================================
+
+  /** Bucket Storage tempat gambar produk disimpan. */
+  const STORAGE_BUCKET = 'product-images';
+  /** Batas ukuran file: 5 MB. */
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  /** Format gambar yang diizinkan. */
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+  /** Pesan error validasi, null = file valid. */
+  function validateImageFile(file) {
+    if (!file) return 'File gambar tidak terbaca. Coba pilih ulang.';
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return 'Format gambar tidak didukung. Gunakan JPG, PNG, atau WEBP.';
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return 'Ukuran gambar terlalu besar. Maksimal 5 MB.';
+    }
+    return null;
+  }
+
+  /** Mengganti teks pada area upload (mis. saat drag over). */
+  function setDropZoneText(text) {
+    if (els.dropText) els.dropText.textContent = text;
+  }
+
+  /** Menyorot area upload ketika file sedang diseret di atasnya. */
+  function highlightDropZone(active) {
+    if (els.dropZone) els.dropZone.classList.toggle('is-dragging', active);
+  }
+
+  /** Menampilkan preview gambar + tombol Ganti / Hapus. */
+  function showPreview(url, infoText) {
+    if (!url) return hidePreview();
+    els.preview.src = url;
+    if (els.fileInfo) els.fileInfo.textContent = infoText || '';
+    els.previewWrap.classList.remove('hidden');
+    if (els.dropZone) els.dropZone.classList.add('hidden');
+  }
+
+  /** Menyembunyikan preview dan mengembalikan area upload. */
+  function hidePreview() {
+    els.previewWrap.classList.add('hidden');
+    if (els.dropZone) els.dropZone.classList.remove('hidden');
+    setDropZoneText('Pilih gambar atau tarik & letakkan di sini');
+  }
+
+  /**
+   * Menangani file yang dipilih lewat klik maupun drag & drop.
+   * Validasi format + ukuran, lalu tampilkan preview. Belum meng-upload.
+   */
+  function handleImageFile(file) {
+    const problem = validateImageFile(file);
+    if (problem) {
+      hidePreview();
+      selectedImageFile = null;
+      showFieldError(els.fileInput, problem);
+      Utils.showToast(problem, 'error');
       return;
     }
-    els.preview.src = url;
-    els.previewWrap.classList.remove('hidden');
+
+    clearFieldError(els.fileInput);
+    selectedImageFile = file;
+    uploadedImageUrl = '';
+
+    // object URL hanya dipakai untuk pratinjau lokal, tidak disimpan ke database.
+    const previewUrl = URL.createObjectURL(file);
+    showPreview(previewUrl, `${file.name} (${Utils.formatNumber(Math.round(file.size / 1024))} KB)`);
+  }
+
+  /** Membersihkan tanda error pada field gambar. */
+  function clearFieldError(field) {
+    if (!field) return;
+    const wrapper = field.closest('[data-field]');
+    const errorEl = wrapper ? wrapper.querySelector('[data-error]') : null;
+    if (errorEl) {
+      errorEl.textContent = '';
+      errorEl.classList.add('hidden');
+    }
+    field.classList.remove('border-rose-400', 'focus:border-rose-400', 'focus:ring-rose-100');
+    field.removeAttribute('aria-invalid');
+  }
+
+  /** Menghasilkan nama file unik agar tidak bentrok dengan produk lain. */
+  function buildUniqueFileName(file) {
+    const stamp = Date.now();
+    const rand = Math.random().toString(36).slice(2, 8);
+    const dot = file.name.lastIndexOf('.');
+    const ext = dot > -1 ? file.name.slice(dot + 1).toLowerCase() : 'jpg';
+    const base = dot > -1 ? file.name.slice(0, dot) : file.name;
+    const safeBase =
+      base
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40) || 'gambar';
+    return `${stamp}-${rand}-${safeBase}.${ext}`;
+  }
+
+  /**
+   * Mengunggah gambar ke Supabase Storage lalu mengembalikan public URL.
+   * Path: produk/{id-atau-'baru'}/{timestamp}-{nama-aman}.{ext}
+   * @returns {Promise<string>} public URL gambar
+   */
+  async function uploadImageToStorage(file) {
+    const folder = editingId ? `produk/${editingId}` : 'produk/baru';
+    const path = `${folder}/${buildUniqueFileName(file)}`;
+
+    const { data, error } = await getSupabase()
+      .storage.from(STORAGE_BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false });
+
+    if (error) throw new Error('Gagal mengunggah gambar: ' + error.message);
+
+    const { data: urlData } = getSupabase().storage.from(STORAGE_BUCKET).getPublicUrl(path);
+    return urlData ? urlData.publicUrl : (data && data.publicUrl) || '';
   }
 
   // ==========================================================================
@@ -528,8 +695,124 @@ const Products = (() => {
       closeForm();
     });
 
-    // Pratinjau gambar saat URL diketik
-    els.formImage.addEventListener('input', Utils.debounce(updateImagePreview, 400));
+    // Upload gambar: pilih file, drag & drop, ganti, hapus.
+    bindImageEvents();
+  }
+
+  // ==========================================================================
+  // EVENT UPLOAD GAMBAR
+  // ==========================================================================
+  //
+  // Semua listener dipasang satu kali di bindEvents() (dipanggil dari init),
+  // sehingga tidak ada listener ganda meski form dibuka berkali-kali.
+  //
+  function bindImageEvents() {
+    // --- Pilih file lewat dialog (tombol drop zone & tombol "Ganti gambar")
+    if (els.dropZone) {
+      els.dropZone.addEventListener('click', () => {
+        if (!isUploading && els.fileInput) els.fileInput.click();
+      });
+    }
+
+    if (els.btnReplaceImage) {
+      els.btnReplaceImage.addEventListener('click', () => {
+        if (!isUploading && els.fileInput) els.fileInput.click();
+      });
+    }
+
+    // --- File benar-benar dipilih (klik maupun drop)
+    if (els.fileInput) {
+      els.fileInput.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        // Memilih gambar baru berarti gambar lama tidak lagi "dihapus".
+        imageRemoved = false;
+        handleImageFile(file);
+      });
+    }
+
+    // --- Hapus gambar (hanya menandai; file lama dihapus setelah produk tersimpan)
+    if (els.btnRemoveImage) {
+      els.btnRemoveImage.addEventListener('click', () => {
+        selectedImageFile = null;
+        imageRemoved = true;
+        uploadedImageUrl = '';
+
+        if (els.fileInput) els.fileInput.value = '';
+        if (els.fileInfo) els.fileInfo.textContent = '';
+        clearFieldError(els.fileInput);
+
+        // Kembalikan ke kondisi "belum ada gambar".
+        hidePreview();
+      });
+    }
+
+    // --- Drag & drop
+    //preventDefault dipakai pada dragover agar elemen jadi target drop yang valid.
+    const dragTargets = [els.uploadArea, els.dropZone].filter(Boolean);
+
+    dragTargets.forEach((target) => {
+      target.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (isUploading) return;
+        highlightDropZone(true);
+      });
+
+      target.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (isUploading) return;
+        // Wajib untuk memicu event "drop" di sebagian browser.
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+        highlightDropZone(true);
+      });
+
+      target.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        // Jangan matikan highlight saat masuk ke elemen anak (ikon/span).
+        if (target.contains(event.relatedTarget)) return;
+        highlightDropZone(false);
+      });
+
+      target.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (isUploading) return;
+        highlightDropZone(false);
+
+        const files = event.dataTransfer ? event.dataTransfer.files : null;
+        const file = files && files[0];
+        if (!file) {
+          setDropZoneText('Pilih gambar atau tarik & letakkan di sini');
+          return;
+        }
+
+        imageRemoved = false;
+        // Sinkronkan nilai input agar state form ikut terisi.
+        if (els.fileInput && typeof DataTransfer === 'function') {
+          try {
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            els.fileInput.files = transfer.files;
+          } catch (error) {
+            // Browser lama tidak mendukung sinkronisasi; preview tetap jalan
+            // karena handleImageFile() menerima objek File secara langsung.
+          }
+        }
+        handleImageFile(file);
+      });
+    });
+
+    // Cegah file yang dijatuhkan di luar area upload agar halaman tidak
+    // membuka file tersebut secara tidak sengaja.
+    ['dragover', 'drop'].forEach((type) => {
+      document.addEventListener(type, (event) => {
+        if (els.uploadArea && els.uploadArea.contains(event.target)) return;
+        if (type === 'drop') event.preventDefault();
+      });
+    });
   }
 
   // ==========================================================================
@@ -565,6 +848,13 @@ const Products = (() => {
       formActive: document.getElementById('product-active'),
       preview: document.getElementById('image-preview'),
       previewWrap: document.getElementById('image-preview-wrap'),
+      uploadArea: document.getElementById('image-upload-area'),
+      dropZone: document.getElementById('image-drop-zone'),
+      dropText: document.getElementById('image-drop-text'),
+      fileInfo: document.getElementById('image-file-info'),
+      fileInput: document.getElementById('product-image'),
+      btnReplaceImage: document.getElementById('btn-replace-image'),
+      btnRemoveImage: document.getElementById('btn-remove-image'),
       saveBtn: document.getElementById('btn-save-product'),
       saveLabel: document.querySelector('[data-save-label]'),
       spinner: document.querySelector('[data-spinner]'),

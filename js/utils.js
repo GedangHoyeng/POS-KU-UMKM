@@ -15,7 +15,9 @@ const Utils = (() => {
   function formatRupiah(value) {
     const number = Number(value) || 0;
     const currency = window.APP_CONFIG?.CURRENCY || 'Rp';
-    return `${currency} ${number.toLocaleString('id-ID')}`;
+    // Pembulatan standar ke rupiah terdekat (mis. 31666.6667 -> 31667).
+    const rounded = Math.round(number);
+    return `${currency} ${rounded.toLocaleString('id-ID')}`;
   }
 
   /** Format angka tanpa simbol mata uang: 15000 -> "15.000" */

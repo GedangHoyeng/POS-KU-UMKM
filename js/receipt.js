@@ -27,7 +27,26 @@ const Receipt = (() => {
 
   function getTransactionNumberFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return (params.get('id') || '').trim();
+    // Hash (#id=...) dipakai sebagai cadangan kedua untuk server yang
+    // membuang query string saat me-redirect .html menjadi URL bersih.
+    const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    return (params.get('id') || fromHash.get('id') || '').trim();
+  }
+
+  /**
+   * Membaca nomor transaksi dari sessionStorage.
+   *
+   * Kasir menyimpan nomor transaksi hasil checkout yang sebenarnya di sini,
+   * sehingga struk tetap bisa dibuka walau query string URL hilang (mis. saat
+   * server development me-redirect /receipt.html?id=... ke /receipt).
+   * Tidak ada nomor yang di-hardcode: nilainya selalu berasal dari RPC.
+   */
+  function getTransactionNumberFromSession() {
+    try {
+      return (window.sessionStorage.getItem('posku:lastTransactionNumber') || '').trim();
+    } catch (error) {
+      return '';
+    }
   }
 
   // ==========================================================================
@@ -35,7 +54,7 @@ const Receipt = (() => {
   // ==========================================================================
 
   async function loadData() {
-    const number = getTransactionNumberFromUrl();
+    const number = getTransactionNumberFromUrl() || getTransactionNumberFromSession();
 
     if (!number) {
       showNotFound('Parameter transaksi tidak ditemukan di URL.');
